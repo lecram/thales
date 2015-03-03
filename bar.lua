@@ -5,6 +5,7 @@ local function bar(n)
         function ()
             local lastdone = 0
             io.write("\r["..string.rep("-", size).."]")
+            io.flush()
             for i = 1, n do
                 local done = math.floor(i * size / n)
                 if done ~= lastdone then
