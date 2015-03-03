@@ -47,7 +47,8 @@ uint32_t alt_pack_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 void alt_unpack_color(uint32_t color, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a);
 alt_image_t *alt_new_image(int width, int height);
 alt_image_t *alt_open_pam(const char *fname);
-void alt_set_line_width(alt_image_t *image, double line_width);
+double alt_get_diameter(alt_image_t *image);
+void alt_set_diameter(alt_image_t *image, double diameter);
 void alt_get_pixel(alt_image_t *image, int x, int y,
                    uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a);
 void alt_set_pixel(alt_image_t *image, int x, int y,
@@ -61,9 +62,6 @@ void alt_del_image(alt_image_t **image);
 void alt_scan(alt_image_t *image, alt_endpt_t *pa, alt_endpt_t *pb);
 void alt_scan_array(alt_image_t *image, alt_endpt_t *points, int count);
 void alt_windredux(alt_image_t *image);
-
-double alt_scanrange(alt_array_t *scanline, double x);
-double alt_dist(alt_image_t *image, double x, double y, double r);
 
 void alt_draw(alt_image_t *image, uint32_t fill, uint32_t strk);
 
@@ -123,8 +121,12 @@ local function open(fname)
     end
 end
 
-function AltImage:set_line_width(width)
-    C.alt_set_line_width(self.img, width)
+function AltImage:get_diameter()
+    return C.alt_get_diameter(self.img)
+end
+
+function AltImage:set_diameter(diameter)
+    C.alt_set_diameter(self.img, diameter)
 end
 
 function AltImage:clear(color)
