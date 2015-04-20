@@ -70,6 +70,43 @@ function PF:get(name)
     return parts, {x0, y0, x1, y1}
 end
 
+function PF:iter(name)
+    local umax = 2^(self.size*8)-1
+    local offset = self.datapos
+    local idx
+    for i = 1, self.nentities do
+        if self.names[i] == name then
+            idx = i
+            break
+        end
+        local partlen = self.partlens[i]
+        for j = 1, #partlen do
+            offset = offset + partlen[j] * self.size * 2
+        end
+    end
+    self.fp:seek("set", offset)
+    --local x0, x1, y0, y1 = unpack(self.bboxes[idx])
+    local partlen = self.partlens[idx]
+    local parts = {}
+    return coroutine.wrap(
+        function ()
+            for i = 1, #partlen do
+                coroutine.yield(coroutine.wrap(
+                    function ()
+                        for j = 1, partlen[i] do
+                            local ulon = self:uint(self.size)
+                            local ulat = self:uint(self.size)
+                            local lon = x0 + ulon * (x1 - x0) / umax
+                            local lat = y0 + ulat * (y1 - y0) / umax
+                            coroutine.yield{lon, lat}
+                        end
+                    end
+                ))
+            end
+        end
+    )
+end
+
 local function open(fname)
     local fp = io.open(fname, "r")
     local self = setmetatable({fp=fp}, PF)
