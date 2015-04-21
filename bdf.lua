@@ -156,14 +156,13 @@ function BDF:putchar(image, code, x, y, r, g, b)
     end
 end
 
-function BDF:print(image, text, x, y, r, g, b)
-    local codes = utf8to32(text)
+function BDF:print(image, codes, x, y, r, g, b)
     for i, c in ipairs(codes) do
         self:putchar(image, c, x+(i-1)*self.w, y, r, g, b)
     end
 end
 
-return {open=open}
+return {open=open, utf8to32=utf8to32}
 
 --local bdf = open("t0-16i-uni.bdf")
 --local bdf = open("unifont-7.0.06.bdf")
