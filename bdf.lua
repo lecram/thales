@@ -163,8 +163,3 @@ function BDF:print(image, codes, x, y, r, g, b)
 end
 
 return {open=open, utf8to32=utf8to32}
-
---local bdf = open("t0-16i-uni.bdf")
---local bdf = open("unifont-7.0.06.bdf")
---print(bdf:get_bitmap(0x263A, "#", " ", "\n"))
---print(bdf:get_bitmap(0x263B, "#", " ", "\n"))
