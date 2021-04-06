@@ -2,85 +2,87 @@ local ffi = require "ffi"
 ffi.cdef[[
 typedef struct {
     double x, y;
-} alt_endpt_t;
+} AltEndPt;
 typedef struct {
     double x, y;
     bool on;
-} alt_ctrpt_t;
+} AltCtrPt;
 typedef struct {
-    alt_endpt_t a, b, c;
-} alt_curve_t;
+    AltEndPt a, b, c;
+} AltCurve;
 typedef struct {
     double dist;    /* distance from scanline origin */
     int sign;       /* 1 for off-on crossing, -1 for on-off */
-} alt_cross_t;
+} AltCross;
 typedef struct {
     unsigned int bulk;  /* current capacity */
     unsigned int count; /* current ocupation */
     size_t size;        /* item size in bytes */
     void *items;        /* actual array contents */
-} alt_array_t;
+} AltArray;
 typedef struct {
     int width, height;  /* image size in pixels */
     int x0, y0, x1, y1; /* dirty region boundaries */
     double diameter;    /* pen diameter */
-    /* Arrays of arrays of alt_cross_t. */
-    alt_array_t **hori, **vert, **extr;
+    /* Arrays of arrays of AltCross. */
+    AltArray **hori, **vert, **extr;
     uint8_t *data;      /* width*height pixels in format 0xRRGGBBAA */
-} alt_image_t;
+} AltImage;
 typedef struct {
     double a, b, c, d, e, f;
-} alt_matrix_t;
+} AltMatrix;
 
-alt_array_t *alt_new_array(size_t item_size, unsigned int init_bulk);
-void alt_resize_array(alt_array_t *array, unsigned int min_bulk);
-void alt_push(alt_array_t *array, void *item);
-void alt_pop(alt_array_t *array, void *item);
-void alt_sort(alt_array_t *array, int (*comp)(const void *, const void *));
-void alt_del_array(alt_array_t **array);
-alt_array_t *alt_box_array(unsigned int item_count, size_t item_size, void *items);
-void *alt_unbox_array(alt_array_t **array);
+AltArray *alt_new_array(size_t item_size, unsigned int init_bulk);
+void alt_resize_array(AltArray *array, unsigned int min_bulk);
+void alt_push(AltArray *array, void *item);
+void alt_pop(AltArray *array, void *item);
+void alt_sort(AltArray *array, int (*comp)(const void *, const void *));
+void alt_del_array(AltArray **array);
+AltArray *alt_box_array(unsigned int item_count, size_t item_size, void *items);
+void *alt_unbox_array(AltArray **array);
 
 int alt_comp_cross(const void *a, const void *b);
 
 uint32_t alt_pack_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 void alt_unpack_color(uint32_t color, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a);
-alt_image_t *alt_new_image(int width, int height);
-alt_image_t *alt_open_pam(const char *fname);
-double alt_get_diameter(alt_image_t *image);
-void alt_set_diameter(alt_image_t *image, double diameter);
-void alt_get_pixel(alt_image_t *image, int x, int y,
+AltImage *alt_new_image(int width, int height);
+AltImage *alt_open_pam(const char *fname);
+double alt_get_diameter(AltImage *image);
+void alt_set_diameter(AltImage *image, double diameter);
+void alt_get_pixel(AltImage *image, int x, int y,
                    uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a);
-void alt_set_pixel(alt_image_t *image, int x, int y,
+void alt_set_pixel(AltImage *image, int x, int y,
                    uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-void alt_clear(alt_image_t *image, uint32_t color);
-void alt_blend(alt_image_t *image, int x, int y,
+void alt_clear(AltImage *image, uint32_t color);
+void alt_blend(AltImage *image, int x, int y,
                uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-void alt_save_pam(alt_image_t *image, const char *fname);
-void alt_del_image(alt_image_t **image);
+void alt_save_pam(AltImage *image, const char *fname);
+void alt_del_image(AltImage **image);
 
-void alt_scan(alt_image_t *image, alt_endpt_t *pa, alt_endpt_t *pb);
-void alt_scan_array(alt_image_t *image, alt_endpt_t *points, int count);
-void alt_windredux(alt_image_t *image);
+void alt_scan(AltImage *image, AltEndPt *pa, AltEndPt *pb);
+void alt_scan_array(AltImage *image, AltEndPt *points, int count);
+void alt_windredux(AltImage *image);
 
-void alt_draw(alt_image_t *image, uint32_t fill, uint32_t strk);
+static double alt_scanrange(AltArray *scanline, double x);
+static double alt_dist(AltImage *image, double x, double y, double r);
 
-void alt_add_curve(alt_array_t *endpts, alt_curve_t *curve);
-alt_array_t *alt_unfold(alt_ctrpt_t *ctrpts, int count);
-alt_ctrpt_t *alt_circle(double x, double y, double r);
+void alt_draw(AltImage *image, uint32_t fill, uint32_t strk);
 
-void alt_reset(alt_matrix_t *mat);
-void alt_add_custom(alt_matrix_t *mat, double a, double b,
+void alt_add_curve(AltArray *endpts, AltCurve *curve);
+AltArray *alt_unfold(AltCtrPt *ctrpts, int count);
+AltCtrPt *alt_circle(double x, double y, double r);
+
+void alt_reset(AltMatrix *mat);
+void alt_add_custom(AltMatrix *mat, double a, double b,
                     double c, double d, double e, double f);
-void alt_add_squeeze(alt_matrix_t *mat, double k);
-void alt_add_scale(alt_matrix_t *mat, double x, double y);
-void alt_add_hshear(alt_matrix_t *mat, double h);
-void alt_add_vshear(alt_matrix_t *mat, double v);
-void alt_add_rotate(alt_matrix_t *mat, double a);
-void alt_add_translate(alt_matrix_t *mat, double x, double y);
-void alt_transform_endpts(alt_endpt_t *endpts, int count, alt_matrix_t *mat);
-void alt_transform_ctrpts(alt_ctrpt_t *ctrpts, int count, alt_matrix_t *mat);
-]]
+void alt_add_squeeze(AltMatrix *mat, double k);
+void alt_add_scale(AltMatrix *mat, double x, double y);
+void alt_add_hshear(AltMatrix *mat, double h);
+void alt_add_vshear(AltMatrix *mat, double v);
+void alt_add_rotate(AltMatrix *mat, double a);
+void alt_add_translate(AltMatrix *mat, double x, double y);
+void alt_transform_endpts(AltEndPt *endpts, int count, AltMatrix *mat);
+void alt_transform_ctrpts(AltCtrPt *ctrpts, int count, AltMatrix *mat);]]
 local C = ffi.load("./libalt.so")
 
 local function as_array(data, ctype)
@@ -134,15 +136,15 @@ function AltImage:clear(color)
 end
 
 function AltImage:lines(end_points)
-    local array, length = as_array(end_points, "alt_endpt_t")
+    local array, length = as_array(end_points, "AltEndPt")
     C.alt_scan_array(self.img, array, length)
 end
 
 function AltImage:curves(control_points)
-    local array, length = as_array(control_points, "alt_ctrpt_t")
+    local array, length = as_array(control_points, "AltCtrPt")
     array = C.alt_unfold(array, length)
     length = array.count
-    array = C.alt_unbox_array(ffi.new("alt_array_t *[1]", array))
+    array = C.alt_unbox_array(ffi.new("AltArray *[1]", array))
     C.alt_scan_array(self.img, array, length)
 end
 
